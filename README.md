@@ -17,10 +17,12 @@ To run TL-SCP, use the `trans_SCP` function withe the required input.
 We direct users to the function files under the `Code` folder for detailed instruction on using the two main functions.
 
 
-
 ## Contact
 
 Please reach out to xiaoqian.liu@ucr.edu for any questions. 
 
+## Citation
+
+Coming soon!
 
 
