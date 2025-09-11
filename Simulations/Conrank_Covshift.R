@@ -70,10 +70,6 @@ ARI_SCP <- matrix(NA, nrow = nSD, ncol = nReps)
 ARI_tSCP <- matrix(NA, nrow = nSD, ncol = nReps)
 ARI_cox <- matrix(NA, nrow = nSD, ncol = nReps)
 
-# Purity
-Purity_SCP <- matrix(NA, nrow = nSD, ncol = nReps)
-Purity_tSCP <- matrix(NA, nrow = nSD, ncol = nReps)
-Purity_cox <- matrix(NA, nrow = nSD, ncol = nReps)
 
 # record beta paramter estimates
 Beta_SCP <- list()
@@ -167,7 +163,6 @@ for (i in 1:nSD) {
     NMI_M_SCP[i, j] <- aricode::NMI(cluster.true, cluster.SCP)
     NMI_S_SCP[i, j] <- aricode::NMI(cluster.true, cluster.SCP, variant = 'sum')
     ARI_SCP[i, j] <- aricode::ARI(cluster.true, cluster.SCP)
-    Purity_SCP[i, j] <- purity(cluster.true, cluster.SCP)
     cat('SCP Done \n')
     
     
@@ -189,7 +184,6 @@ for (i in 1:nSD) {
     NMI_M_tSCP[i, j] <- aricode::NMI(cluster.true, cluster.tSCP)
     NMI_S_tSCP[i, j] <- aricode::NMI(cluster.true, cluster.tSCP, variant = 'sum')
     ARI_tSCP[i, j] <- aricode::ARI(cluster.true, cluster.tSCP)
-    Purity_tSCP[i, j] <- purity(cluster.true, cluster.tSCP)
     cat('SCP Done \n')
     
     
@@ -217,12 +211,11 @@ for (i in 1:nSD) {
     NMI_M_cox[i, j] <- aricode::NMI(cluster.true, cluster.cox)
     NMI_S_cox[i, j] <- aricode::NMI(cluster.true, cluster.cox, variant = 'sum')
     ARI_cox[i, j] <- aricode::ARI(cluster.true, cluster.cox)
-    Purity_cox[i, j] <- purity(cluster.true, cluster.cox)
     
     cat('cox-kmeans Done \n')
     
     
-    save.image(file = "Conrank_Covshift2_n200.RData")
+    save.image(file = "Conrank_Covshift.RData")
   }
   
   cat('case', i, 'finish \n')
@@ -231,5 +224,5 @@ for (i in 1:nSD) {
   Beta_tSCP[[i]] <- beta_tSCP
   Beta_cox[[i]] <- beta_cox
   
-  save.image(file = "Conrank_Covshift2_n200.RData")
+  save.image(file = "Conrank_Covshift.RData")
 }

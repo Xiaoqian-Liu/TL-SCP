@@ -49,53 +49,6 @@ fused_MCP <- function(y, X, w, D, lambda, a = 3, beta0 = rep(0, ncol(X)), maxite
 
 
 
-#' Compute the solution of weighted LS + double fused MCP penalties.
-#'
-#' @param y The response vector.
-#' @param X The design matrix.
-#' @param w The vector of weights in the least squares term.
-#' @param D_in One fusion matrix (for the within-segment penalty in aCARDS).
-#' @param D_bt The other fusion matrix (for the between-segment penalty in aCARDS).
-#' @param lambda_in The regularization parameter associated with D_in.
-#' @param lambda_bt The regularization parameter associated with D_bt.
-#' @param a The hyper-parameter in MCP.
-#' @param beta0 The initial vector of coefficients.
-#' @param maxiters The maximum number of iterations for the algorithm.
-#' @param tol The tolerance value for early stopping the algorithm. 
-#' @export
-fused_2MCP <- function(y, X, w=rep(1, length(y)), D_in, D_bt, lambda_in, lambda_bt, 
-                        a=3.7, beta0=rep(0, ncol(X)), maxiters=1e2, tol=1e-5) {
-  
-  # the key is that we transform it to a fused lasso problem
-  
-  for (k in 1:maxiters) {
-    
-    # for each iteration, D changes
-    Dbeta_in <- D_in%*%beta0
-    Dbeta_bt <- D_bt%*%beta0
-    
-    
-    # obtain the two L diagonal matrices, whose diagonal values are MCP derivative
-    L_in <- Diagonal(n=nrow(D_in), x=MCP_prime(Dbeta_in, lambda=lambda_in, a=a))
-    L_bt <- Diagonal(n=nrow(D_bt), x=MCP_prime(Dbeta_bt, lambda=lambda_bt, a=a))
-    D1 <- L_in%*%D_in
-    D2 <- L_bt%*%D_bt
-    D <- rbind(D1, D2)
-    
-    # at each iteration, solve a fused lasso problem
-    beta <- fused_Lasso(y, X, w, D=D, lambda=1)$beta #Note here lambda=1 for the fused lasso problem
-    
-    #check convergence
-    if ( norm(beta-beta0,'2') < tol*(1 + norm(beta0,'2')) ) break
-    
-    # update the estimate
-    beta0 <- beta
-  }
-  
-  return(list(beta=beta, iters=k))
-}
-
-
 
 
 

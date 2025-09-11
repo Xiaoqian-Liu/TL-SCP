@@ -1,6 +1,6 @@
-#' Compute k-th order differencing matrix.
+#' Compute k-th order fusion matrix.
 #'
-#' @param k The order of the differencing matrix.
+#' @param k The order of the fusion matrix.
 #' @param n The number of time points.
 #' @export
 myGetDkn <- function(k, n) {

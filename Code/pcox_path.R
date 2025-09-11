@@ -12,7 +12,7 @@
 #' @param tol The tolerance value for early stopping the algorithm. 
 #' @export
 pcox_path <- function(y, status, X, D, penalty="Lasso", lambdaSeq=seq(1, 1e-3, length.out=10),
-                      rho=1e3, kSeq=1:3, ebic.gm = 0, maxiters=1e3, tol=1e-4){
+                      kSeq=1:3, ebic.gm = 0, maxiters=1e3, tol=1e-4){
   
   n <- nrow(X)
   p <- ncol(X)

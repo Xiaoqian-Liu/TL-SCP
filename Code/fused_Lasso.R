@@ -40,7 +40,7 @@ fused_Lasso <- function(y, X, w=rep(1, length(y)), D, lambda) {
   model$lb        <- c(rep(-Inf, p), rep(0, 2*r))
 
 
-  params <- list(OutputFlag=0) #NonConvex = 2? but very slow , DualReductions=0
+  params <- list(OutputFlag=0) 
 
   result <- gurobi(model, params)
 

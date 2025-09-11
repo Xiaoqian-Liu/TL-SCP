@@ -17,7 +17,6 @@ library(Matrix)
 library(survival)
 library(gurobi)
 library(gtools)
-#library(SIS)
 library(dplyr)
 library(ggplot2)
 library(latex2exp)
@@ -70,11 +69,6 @@ ARI_SCP <- matrix(NA, nrow = nS, ncol = nReps)
 ARI_tSCP <- matrix(NA, nrow = nS, ncol = nReps)
 ARI_cox <- matrix(NA, nrow = nS, ncol = nReps)
 
-
-# Purity
-Purity_SCP <- matrix(NA, nrow = nS, ncol = nReps)
-Purity_tSCP <- matrix(NA, nrow = nS, ncol = nReps)
-Purity_cox <- matrix(NA, nrow = nS, ncol = nReps)
 
 
 # record beta paramter estimates
@@ -157,8 +151,8 @@ for (i in 1:nS) {
     ### SCP + distance
     #########################
     t0 <- proc.time()
-    fit_SCP <- bCARDS_Cox(y=Y_T[, 1], status=Y_T[, 2], X_T, penalty="distance", nclusters=kSeq,
-                          ebic.gm=0, screening = FALSE, maxiters=maxiters, tol=tol)
+    fit_SCP <- SCP(y=Y_T[, 1], status=Y_T[, 2], X_T, penalty="distance", nclusters=kSeq,
+                   ebic.gm=0, maxiters=maxiters, tol=tol)
     
     t1 <-proc.time()-t0
     time_SCP[i, j] <- t1[[3]]
@@ -171,7 +165,6 @@ for (i in 1:nS) {
     NMI_M_SCP[i, j] <- aricode::NMI(cluster.true, cluster.SCP)
     NMI_S_SCP[i, j] <- aricode::NMI(cluster.true, cluster.SCP, variant = 'sum')
     ARI_SCP[i, j] <- aricode::ARI(cluster.true, cluster.SCP)
-    Purity_SCP[i, j] <- purity(cluster.true, cluster.SCP)
     cat('SCP Done \n')
     
     
@@ -193,7 +186,6 @@ for (i in 1:nS) {
     NMI_M_tSCP[i, j] <- aricode::NMI(cluster.true, cluster.tSCP)
     NMI_S_tSCP[i, j] <- aricode::NMI(cluster.true, cluster.tSCP, variant = 'sum')
     ARI_tSCP[i, j] <- aricode::ARI(cluster.true, cluster.tSCP)
-    Purity_tSCP[i, j] <- purity(cluster.true, cluster.tSCP)
     cat('tSCP Done \n')
     
     
@@ -221,11 +213,10 @@ for (i in 1:nS) {
     NMI_M_cox[i, j] <- aricode::NMI(cluster.true, cluster.cox)
     NMI_S_cox[i, j] <- aricode::NMI(cluster.true, cluster.cox, variant = 'sum')
     ARI_cox[i, j] <- aricode::ARI(cluster.true, cluster.cox)
-    Purity_cox[i, j] <- purity(cluster.true, cluster.cox)
     
     cat('cox-kmeans Done \n')
     
-    save.image(file = "Inconrank_Covshift_n200.RData")
+    save.image(file = "Inconrank_Covshift.RData")
   }
   
   cat('case', i, 'finish \n')
@@ -234,5 +225,5 @@ for (i in 1:nS) {
   Beta_tSCP[[i]] <- beta_tSCP
   Beta_cox[[i]] <- beta_cox
   
-  save.image(file = "Inconrank_Covshift_n200.RData")
+  save.image(file = "Inconrank_Covshift.RData")
 }

@@ -44,33 +44,3 @@ log_sum_exp_weighted <- function(x, w) {
 
 
 
-
-
-# old function
-
-# pll_cox <- function(y, status, X, beta, weight = rep(1, length(y))){
-#   fail_times <- unique(y[status==1])
-#   m <- length(fail_times)
-#   # Define a vector to record likelihood at each specific failure time
-#   likelihood_vec <- rep(NA, m)
-# 
-#   for(j in 1:m){
-#     D <- which(y==fail_times[j] & status==1) # consider ties
-#     R <- which(y>=fail_times[j])
-#     # Compute the current stage likelihood with the given weights
-#     Xb1 <- X[D, ] %*% beta
-#     numerator <- exp(sum(diag(weight[D], nrow = length(D)) %*% Xb1))
-#     Xb2 <- X[R, ] %*% beta
-#     denominator <- sum(diag(weight[R], nrow = length(R)) %*% exp(Xb2))^sum(weight[D])
-#     
-#     print(diag(weight[R], nrow = length(R)) %*% exp(Xb2))
-#     likelihood_vec[j] = numerator/denominator
-#   }
-# 
-# 
-# 
-#   # Return the partial log-likelihood
-#   return(log(prod(likelihood_vec)))
-# }
-
-

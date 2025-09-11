@@ -9,7 +9,6 @@
 #' @param penalty The penalty function, options include 'Lasso'(default), 'SCAD', 'MCP', and 'distance'.
 #' @param lambdaSeq A decreasing sequence of values for the regularization parameter lambda (for 'Lasso', 'SCAD', and 'MCP').
 #' @param nclusters A sequence of number of clusters, only used for penalty = "distance".
-#' @param screening Whether or not to perform feature screening before computing the preliminary estimate.
 #' @param ebic.gm The gamma parameter in EBIC. Default is 0, which corresponds to BIC.
 #' @param maxiters The maximum number of iterations.
 #' @param tol The tolerance value for early stopping the algorithm. 
