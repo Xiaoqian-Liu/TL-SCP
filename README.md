@@ -6,7 +6,7 @@ This repository includes all codes and simulation scripts for reproducing the re
 
 ## Prerequisites
 
-To run SCP/TL-SCP with the penalty Lasso, SCAD, or MCP, please install the Gurobi R interface in your RStudio. Details of the installation are referred to [here](https://support.gurobi.com/hc/en-us/articles/14462206790033-How-do-I-install-Gurobi-for-R).
+To run SCP/TL-SCP with the penalty Lasso, SCAD, or MCP, please install the [`Gurobi R interface`](https://docs.gurobi.com/projects/optimizer/en/current/reference/r.html) in your RStudio. Details of the installation are referred to [here](https://docs.gurobi.com/projects/optimizer/en/current/reference/r/setup.html).
 
 ## Implementation
 
