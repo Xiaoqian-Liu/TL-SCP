@@ -14,8 +14,6 @@ library(ggplot2)
 library(survival)
 library(survminer)
 library(factoextra)
-# library(patchwork)
-# library(ggnewscale)
 
 source('~/Code/cluster_label.R')
 source('~/Code/fused_Dist.R')
@@ -38,7 +36,7 @@ source('~/Code/SCP.R')
 The TP53 database has a collection of germline TP53 mutations with family history and age of diagnosis available, see <https://tp53.cancer.gov/get_tp53data#get_germ_mut> (germline TP53 variants and family history). Our current plan is to cluster germline TP53 mutations based on their survival effects on LFS patients. Since LFS is rare, we use all germline carriers information as the source data. 
 
 ```{r}
-
+# We have downloaded the dataset and saved it under the current forlder
 dt <- read.csv('GermlineDownload_r20.csv')
 
 # select the needed columns
@@ -52,14 +50,14 @@ To run the SCP model, we need the following information:
 
 1) Mutation information 
 2) Gender information
-3) Survival information (either age or age at diagnosis is availabel)
+3) Survival information (either age or age at diagnosis is available)
 
-Next, we extract the data from the TP53 database. Here note that we do not need to screen out those non-recurring patients since we will later borrow information from the general germline carriers to improve the estimation of survival effects.
+Next, we extract the data from the TP53 database. 
 
 ```{r}
 # select LFS patients with confirmed TP53 mutations
 dt_LFS <- dt_use %>% filter(Class%in%c('LFS')&Germline_carrier%in% c('Confirmed', 'Obligatory'))
-# dt_LFS <- dt_use %>% filter(Class%in%c('LFS'))
+
 # screen out patients with no age information
 dt_LFS <- dt_LFS %>% filter(!is.na(Age) | !is.na(Age_at_diagnosis))
 # remove unknown mutations
@@ -95,13 +93,12 @@ length(unique(dt_LFS_first$ProtDescription))
 
 ## Germline carriers
 
-We extract the germline carriers (not LFS) from the TP53 database with the same set of mutations.
+We extract the germline carriers (non-LFS) from the TP53 database with the same set of mutations.
 
 ```{r}
-# select LFS patients with confirmed TP53 mutations
+# select non-LFS patients 
 dt_Germ <- dt_use %>% filter(!Class%in%c('LFS') & Germline_carrier!='negative'  | Class%in%c('LFS') &       
                                is.na(Germline_carrier) | Class%in%c('LFS')&Germline_carrier%in% c('50%prob.', ''))
-# dt_Germ <- dt_use %>% filter(!Class%in%c('LFS') & Germline_carrier!='negative')
 
 # screen out patients with no age information
 dt_Germ <- dt_Germ %>% filter(!is.na(Age) | !is.na(Age_at_diagnosis))
@@ -113,16 +110,11 @@ dt_Germ <- dt_Germ %>% filter(ProtDescription!='p.?')
 dt_Germ <- dt_Germ %>% mutate(time=ifelse(is.na(Age_at_diagnosis), Age, Age_at_diagnosis))%>%
                             mutate(status=ifelse(is.na(Age_at_diagnosis), 0, 1))
 
-# there are patients who have no gender information
+# there are patients who miss gender information
 dt_Germ <- dt_Germ %>% filter(!is.na(Sex))
 # there is one patient who has a zero survival time
 dt_Germ <- dt_Germ %>% filter(time>0)
 
-
-# check the patient count for each mutation
-# mut_ct <- dt_LFS_use %>% group_by(ProtDescription)%>%summarise(n=n())
-# only use recurring mutations
-# dt_LFS_use <- dt_LFS_use %>% filter(ProtDescription %in% mut_ct$ProtDescription[mut_ct$n>3])
 
 # !!!!!! get the first cancer diagnosis information 
 dt_Germ_first <- dt_Germ %>%
@@ -137,7 +129,7 @@ nrow(dt_Germ_first)
 length(unique(dt_Germ_first$ProtDescription))
 ```
 
-We only focus on those mutations which have carriers in both datasets. In that case, we can borrow the survival information from the general germline group to the LFS group. 
+We only focus on those mutations which have carriers in both datasets. In that case, we can borrow the survival information from the non-LFS group to the LFS group. 
 
 ```{r}
 mut_set <- intersect(unique(dt_LFS_first$ProtDescription), unique(dt_Germ_first$ProtDescription))
@@ -195,7 +187,7 @@ We first run SCP by only using the LFS patients data.
 ```{r}
 ## Construct the D matrix
   beta0 <- as.vector(fit$beta[-1]) # we do not include the gender
-  # sort X and then use the first-order differencing matrix
+  # sort X and then use the first-order fusion matrix
   ss <- sort(beta0, index.return = TRUE)
   tau <- ss$ix
   X1 <- X_T[, -1]
@@ -300,54 +292,12 @@ table(label_YTA)
 ```
 
 ```{r}
-SCP_results <- data.frame(names = rownames(fit$beta), coef=Beta_matrix[, idx], label_SCP=label_SCP, label_YTA = c(NA, label_YTA))
+SCP_results <- data.frame(names = rownames(fit$beta), coef=Beta_matrix[, idx], label_SCP=label_SCP)
 df_ordered <- SCP_results[order(SCP_results$coef,decreasing=FALSE, na.last=FALSE), ]
 print(df_ordered)
 ```
-Now we construct the dataset for the KM plot. 
 
 
-```{r}
-dt_LFS_KM <- dt_LFS_use
-dt_LFS_KM$Group <- NA
-
-for (i in 1:nrow(dt_LFS_KM)) {
-  mut <- dt_LFS_KM$ProtDescription[i]
-  ind <- which(SCP_results$names %in% mut)
-  dt_LFS_KM$Group[i] <- SCP_results$label_SCP[ind]
-}
-
-```
-
-
-Now we are ready to show the KM plot
-```{r}
-# Load the libraries
-library(survival)
-library(survminer)
-surv_object <- Surv(time = dt_LFS_KM$time, event = dt_LFS_KM$status)
-
-# Fit a Kaplan-Meier survival curve
-km_fit <- survfit(surv_object ~ Group, data = dt_LFS_KM)
-
-# Plot the Kaplan-Meier curve
-ggsurvplot(km_fit,
-           data = dt_LFS_KM,
-           pval = TRUE,             # Show p-value for the log-rank test
-           conf.int = TRUE,         # Add confidence intervals
-           risk.table = TRUE,       # Add risk table
-           legend.labs = c("Early", "Mid", "Late"),  # Label the legend
-           xlab = "Age at first cancer diagnosis",    # Label for x-axis
-           ylab = "Survival Probability", # Label for y-axis
-           ggtheme = theme_minimal() ,# Use a minimal theme
-           font.main = c(16, "bold"),
-           font.x = c(14), #, "italic"),
-           font.y = c(14), #, "italic"),
-           font.legend = c(14), #, "italic"),
-           font.tickslab = c(12, "plain")
-)
-
-```
 
 ## Trans-SCP for LFS 
 
@@ -408,10 +358,10 @@ tau_weighted <- wRankAveg(beta_S, beta_T, W_S, W_T)
 ```
 
 
-Next, we are ready to run trans-SCP using the weighted ranking.
+Next, we are ready to run SCP using the weighted ranking, which is essentially the TL-SCP approach. 
 
 ```{r}
-# Construct the differencing matrix using the weighted ranking
+# Construct the fusion matrix using the weighted ranking
 X2 <- X_T[, -1]
 X2_order <- X2[, tau_weighted]
 X2_order <- cbind(X_T[, 1], X2_order)
@@ -436,8 +386,6 @@ for (j in 1:nC) {
 
   t0 <- Sys.time()
   out_trSCP <- pcox(Y_T[, 1], Y_T[, 2], X2_order, D_weighted, penalty="distance",lambda=0, k=nclusters-1, 
-                                    #beta0 = rnorm(ncol(X_order), 0,1),
-                                     #beta0 = c(fit_T$beta[1], sort(beta0)),
                                     maxiters=1e3, tol=1e-5)
   t2 <- Sys.time()
   t2-t0
@@ -487,6 +435,36 @@ label_trSCP[sub4] <- 'Early'
 label_trSCP <- c(NA, label_trSCP)
 ```
 
+
+Now let's load the annotation from the YTA method. 
+```{r}
+# clustering results from YTA, shared by Pierre Hainaut 
+dt_YTA <- read_xlsx('Table_Classes_TP53variants.xlsx')
+
+label_YTA <- rep(NA, length(mut_list))
+for (i in 1:length(mut_list)) {
+  ind <- which(dt_YTA$ProtDescription==mut_list[i])
+  if(length(ind)==1){
+    label_YTA[i] <- dt_YTA$cluster_rec[ind]
+  }
+  
+  if(grepl("*", mut_list[i], fixed = TRUE)){
+    label_YTA[i] <- 0
+  }
+  if(grepl("fs", mut_list[i], fixed = TRUE)){
+    label_YTA[i] <- 0
+  }
+  if(grepl("del", mut_list[i], fixed = TRUE)){
+    label_YTA[i] <- 0
+  }
+  if(grepl("insIQ", mut_list[i], fixed = TRUE)){
+    label_YTA[i] <- 0
+  }
+}
+table(label_YTA)
+```
+
+
 ```{r}
 trSCP_results <- data.frame(names = rownames(fit_T$beta), coef=Beta_matrix2[, idx], label_trSCP=label_trSCP, label_YTA = c(NA, label_YTA))
 trSCP_ordered <- trSCP_results[order(trSCP_results$coef, decreasing=FALSE, na.last=FALSE), ]
@@ -508,50 +486,53 @@ for (i in 1:nrow(dt_LFS_KM2)) {
 ```
 
 
-Now we are ready to show the new KM plot
+Now we are ready to show the KM plot
 ```{r}
 # Load the libraries
 library(survival)
 library(survminer)
 surv_object <- Surv(time = dt_LFS_KM2$time, event = dt_LFS_KM2$status)
-
+dt_LFS_KM2$Group <- factor(dt_LFS_KM2$Group, levels=c("Early", "Mid", "Late"))
 # Fit a Kaplan-Meier survival curve
-km_fit <- survfit(surv_object ~ Group, data = dt_LFS_KM2)
+km_fit <- survfit(surv_object ~ Group, data = dt_LFS_KM2, conf.int = 0.90)
 
 # Plot the Kaplan-Meier curve
- ggsurvplot(km_fit,
+p_tlscp <- ggsurvplot(km_fit,
            data = dt_LFS_KM2,
-           pval = TRUE,             # Show p-value for the log-rank test
-           #conf.int = TRUE,         # Add confidence intervals
+           #pval = TRUE,             # Show p-value for the log-rank test
+           conf.int = TRUE,         # Add confidence intervals
            #risk.table = TRUE,       # Add risk table
-           legend.labs = c("early-onset", "late-onset", "mid-onset"),  # Label the legend
-           xlab = "Age at first cancer diagnosis",    # Label for x-axis
-           ylab = "Survival Probability", # Label for y-axis
+           legend.labs = c("Early-onset: 23(163)", 
+                           "Mid-onset: 12(74)", 
+                           "Late-onset: 4(18)"),  # Label the legend
+           legend.title = "TL-SCP groups", 
+           xlab = "Age",    # Label for x-axis
+           ylab = "Probability of first cancer diagnosis", # Label for y-axis
+           legend.position.inside = c(5, 5),
            ggtheme = theme_minimal() ,# Use a minimal theme
-           font.main = c(16, "bold"),
-           font.x = c(14), #, "italic"),
-           font.y = c(14), #, "italic"),
-           font.legend = c(14), #, "italic"),
-           font.tickslab = c(12, "plain")
+           font.main = c(14, "bold"),
+           font.x = c(12), #, "italic"),
+           font.y = c(12), #, "italic"),
+           font.legend = c(12), #, "italic"),
+           font.tickslab = c(10, "plain")
 )
+p_tlscp$plot <- p_tlscp$plot + 
+  theme(
+    legend.position = c(0.82, 0.8),   # x, y coordinates in [0,1]
+    legend.background = element_rect(fill = "white", color = "black"),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 12)
+  )
 
+p_tlscp$plot
 ```
 
 
-```{r}
-Combined_results <- data.frame(names = rownames(fit_T$beta), coef_SCP=Beta_matrix[, idx], coef_trSCP=Beta_matrix2[, idx],
-                               label_SCP=label_SCP,label_trSCP=label_trSCP, label_YTA = c(NA, label_YTA), 
-                               count = c(NA, TB_T$count))
-print(Combined_results)
-
-# save the results 
-library(writexl)
-write_xlsx(Combined_results, 'TrSCP_combined_final2.xlsx')
-```
 
 The KM plot using YTA analysis.
 
 ```{r}
+
 dt_LFS_KM3 <- dt_LFS_use
 dt_LFS_KM3$Group <- NA
 
@@ -559,17 +540,17 @@ for (i in 1:nrow(dt_LFS_KM3)) {
   mut <- dt_LFS_KM3$ProtDescription[i]
   ind <- which(dt_YTA$ProtDescription %in% mut)
   if(length(ind)==1){
-      if(dt_YTA$cluster_rec[ind] %in% c("0", "A")){
-         dt_LFS_KM3$Group[i] <- "High"
-      }
+    if(dt_YTA$cluster_rec[ind] %in% c("0", "A")){
+      dt_LFS_KM3$Group[i] <- "High"
+    }
     
-      if(dt_YTA$cluster_rec[ind] %in% c("B")){
-         dt_LFS_KM3$Group[i] <- "Medium"
-      }
+    if(dt_YTA$cluster_rec[ind] %in% c("B")){
+      dt_LFS_KM3$Group[i] <- "Medium"
+    }
     
-      if(dt_YTA$cluster_rec[ind] %in% c("C", "D")){
-         dt_LFS_KM3$Group[i] <- "Low"
-      }
+    if(dt_YTA$cluster_rec[ind] %in% c("C", "D")){
+      dt_LFS_KM3$Group[i] <- "Low"
+    }
   }
   if(grepl("*", mut, fixed = TRUE)){
     dt_LFS_KM3$Group[i] <- "High"
@@ -584,29 +565,122 @@ for (i in 1:nrow(dt_LFS_KM3)) {
     dt_LFS_KM3$Group[i] <- "High"
   }
   
-
+  
 }
 
 surv_object <- Surv(time = dt_LFS_KM3$time, event = dt_LFS_KM3$status)
-
+dt_LFS_KM3$Group <- factor(dt_LFS_KM3$Group, levels=c("High", "Medium", "Low"))
 # Fit a Kaplan-Meier survival curve
-km_fit <- survfit(surv_object ~ Group, data = dt_LFS_KM3)
+km_fit_yta <- survfit(surv_object ~ Group, data = dt_LFS_KM3, conf.int = 0.90)
 
-# Plot the Kaplan-Meier curve
-ggsurvplot(km_fit,
+p_yta <- ggsurvplot(km_fit_yta,
            data = dt_LFS_KM3,
-           pval = TRUE,             # Show p-value for the log-rank test
-           #conf.int = TRUE,         # Add confidence intervals
-           #risk.table = TRUE,       # Add risk table
-           legend.labs = c("High-risk (0+A)", "Low-risk (c+D)", "Medium-risk (B)"),  # Label the legend
-           xlab = "Age at diagnosis",    # Label for x-axis
-           ylab = "Survival Probability", # Label for y-axis
+           #pval = TRUE,             # Show p-value for the log-rank test
+           conf.int = TRUE,         # Add confidence intervals
+           risk.table = TRUE,       # Add risk table
+           legend.labs = c("Early-onset: 33(212)", 
+                           "Mid-onset: 3(29)", 
+                           "Late-onset: 2(12)"),  # Label the legend
+           legend.title = "YTA groups", 
+           xlab = "Age",    # Label for x-axis
+           ylab = "Probability of first cancer diagnosis", # Label for y-axis
            ggtheme = theme_minimal(), # Use a minimal theme
-           font.main = c(16, "bold"),
-           font.x = c(14), #, "italic"),
-           font.y = c(14), #, "italic"),
-           font.legend = c(14), #, "italic"),
-           font.tickslab = c(12, "plain")
+           font.main = c(14, "bold"),
+           font.x = c(12), #, "italic"),
+           font.y = c(12), #, "italic"),
+           font.legend = c(12), #, "italic"),
+           font.tickslab = c(10, "plain")
 )
+p_yta$plot <- p_yta$plot + 
+  theme(
+    legend.position = c(0.82, 0.8),   # x, y coordinates in [0,1]
+    legend.background = element_rect(fill = "white", color = "black"),
+    legend.title = element_text(size = 12),
+    legend.text = element_text(size = 12)
+  )
+
+p_yta$plot
 ```
+
+
+
+```{r}
+Combined_results <- data.frame(names = rownames(fit_T$beta), coef_SCP=Beta_matrix[, idx], coef_trSCP=Beta_matrix2[, idx],
+                               label_SCP=label_SCP, label_trSCP=label_trSCP, label_YTA = c(NA, label_YTA), 
+                               count = c(NA, TB_T$count))
+# print(Combined_results)
+# # save the results 
+# library(writexl)
+# write_xlsx(Combined_results, 'TrSCP_combined_final2.xlsx')
+
+Combined_ordered <- Combined_results[order(Combined_results$coef_trSCP, decreasing=TRUE, na.last=FALSE), ]
+Combined_ordered <- Combined_ordered[-24, c(1,4,5,6, 7)]
+#write_xlsx(Combined_ordered, '~/Documents/1MDA/LFS/TrSCP_combined_ordered.xlsx')
+```
+
+Alluvial plot for SCP v.s. TL-SCP
+
+```{r}
+Combined_ordered2 <- Combined_ordered[, c(1,2,3, 5)]
+colnames(Combined_ordered2) <- c("Mutation", "SCP", "TL_SCP", "count")
+# Count the number of mutations
+Combined_ordered2$count2 <- 1 
+# Rename factor levels
+Combined_ordered2$TL_SCP <- factor(Combined_ordered2$TL_SCP, levels=c("Early", "Mid", "Late"))
+Combined_ordered2$SCP <- factor(Combined_ordered2$SCP, levels=c("Early", "Mid", "Late"))
+# Rename factor levels using recode()
+Combined_ordered2$TL_SCP <- recode(Combined_ordered2$TL_SCP, Early = "Early-onset", Mid = "Mid-onset", Late = "Late-onset")
+Combined_ordered2$SCP <- recode(Combined_ordered2$SCP, Early = "Early-onset", Mid = "Mid-onset", Late = "Late-onset")
+
+ggplot(Combined_ordered2,
+       aes(axis1 = SCP, axis2 = TL_SCP, y = count2)) + # change count to count2 to compare mutation follow.
+  geom_alluvium(aes(fill = TL_SCP)) +
+  geom_stratum(width = 1/5, fill = "grey95") +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  scale_x_discrete(limits = c("SCP", "TL-SCP"),
+                   expand = c(.05, .05)) +
+  # ggtitle("Alluvial Plot of Mutation Annotations (TL-SCP vs SCP)") +
+  ylab("Mutation count")+
+  labs(fill="TL-SCP groups")+
+  theme_minimal()+
+  theme(legend.position = "top",
+        axis.text.x = element_text(family = "sans",  color="black", size = 8)) # x-axis ticks)  
+```
+
+Alluvial plot for YTA v.s. TL-SCP
+
+```{r}
+Combined_ordered3 <- Combined_ordered[, c(1,3, 4, 5)]
+colnames(Combined_ordered3) <- c("Mutation", "TL_SCP", "YTA", "count")
+# Count the number of mutations
+Combined_ordered3$count2 <- 1 
+# Rename factor levels
+Combined_ordered3$TL_SCP <- factor(Combined_ordered3$TL_SCP, levels=c("Early", "Mid", "Late"))
+Combined_ordered3$YTA <- factor(Combined_ordered3$YTA, levels=c("0", "A", "B", "C", "D"))
+# Rename factor levels using recode()
+Combined_ordered3$TL_SCP <- recode(Combined_ordered3$TL_SCP, Early = "Early-onset", Mid = "Mid-onset", Late = "Late-onset")
+Combined_ordered3$YTA2 <- Combined_ordered3$YTA
+# Combined_ordered3$YTA2 <- recode(Combined_ordered3$YTA2, "0" = "High-risk", A = "High-risk", 
+#                                  B = "Mid-risk", C = "Low-risk", D = "Low-risk")
+Combined_ordered3$YTA2 <- recode(Combined_ordered3$YTA2, "0" = "Early-onset", A = "Early-onset", 
+                                 B = "Mid-onset", C = "Late-onset", D = "Late-onset")
+#Combined_ordered3$YTA2 <- recode(Combined_ordered3$YTA2, Early = "Early-onset", Mid = "Mid-onset", Late = "Late-onset")
+
+
+ggplot(Combined_ordered3,
+       aes(axis1 = YTA2, axis2 = TL_SCP, y = count2)) + # change count to count2 to compare mutation follow.
+  geom_alluvium(aes(fill = TL_SCP)) +
+  geom_stratum(width = 1/5, fill = "grey95") +
+  geom_text(stat = "stratum", aes(label = after_stat(stratum))) +
+  scale_x_discrete(limits = c("YTA", "TL-SCP"),
+                   expand = c(.05, .05)) +
+  # ggtitle("Alluvial Plot of Mutation Annotations (TL-SCP vs SCP)") +
+  ylab("Mutation count")+
+  labs(fill="TL-SCP groups")+
+  theme_minimal()+
+  theme(legend.position = "top",
+        axis.text.x = element_text(family = "sans",  color="black", size = 8)) # x-axis ticks)  
+
+```
+
 
