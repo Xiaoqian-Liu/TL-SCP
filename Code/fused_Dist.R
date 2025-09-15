@@ -10,7 +10,7 @@
 #' @param maxiters The maximum number of iterations.
 #' @param tol The tolerance value for early stopping the algorithm. 
 #' @export
-fused_Dist <- function(y, X, w=rep(1, length(y)), D, k, rho=1,  beta0=rep(0, ncol(X)), maxiters=1e2, tol=1e-5){
+fused_Dist <- function(y, X, w=rep(1, length(y)), D, k, rho=1e-3,  beta0=rep(0, ncol(X)), maxiters=1e2, tol=1e-5){
   n <- length(w)
   W <- Diagonal(n=n, x = w)
   XtW <- t(X)%*%W
