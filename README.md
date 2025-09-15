@@ -17,6 +17,7 @@ To run TL-SCP, use the `trans_SCP` function withe the required input.
 We direct users to the function files under the `Code` folder for detailed instruction on using the two main functions.
 
 
+## Acknowledgement
 
 *This project originated from collaborative work between Wenyi Wang's lab and the Xiaoqian Liu's lab. 
 The repository is maintained by Xiaoqian Liu, with ongoing contributions acknowledged from both labs.*
