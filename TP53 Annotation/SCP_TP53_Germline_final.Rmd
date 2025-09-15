@@ -33,7 +33,7 @@ source('~/Code/SCP.R')
 
 ## The TP53 database
 
-The TP53 database has a collection of germline TP53 mutations with family history and age of diagnosis available, see <https://tp53.cancer.gov/get_tp53data#get_germ_mut> (germline TP53 variants and family history). Our current plan is to cluster germline TP53 mutations based on their survival effects on LFS patients. Since LFS is rare, we use all germline carriers information as the source data. 
+The TP53 database (<https://tp53.cancer.gov/>) has a collection of germline TP53 mutations with family history and age of diagnosis available, which we have downloaded to the current folder. Our current plan is to cluster germline TP53 mutations based on their survival effects on LFS patients. Since LFS is rare, we use all germline carriers information as the source data. 
 
 ```{r}
 # We have downloaded the dataset and saved it under the current forlder
