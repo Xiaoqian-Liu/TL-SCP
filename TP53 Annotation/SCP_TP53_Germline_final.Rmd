@@ -207,16 +207,14 @@ nuSeq <- rep(NA, nC)
 Beta_matrix <- matrix(NA, ncol(X_T), nC)
 
 for (j in 1:nC) {
-  cat(paste('Current stage:', j, 'case'))
+  cat(paste('Current stage:', j, 'case'), '\n')
   # fix the number of clusters
   nclusters <- ncSeq[j]
   
   
   t0 <- Sys.time()
   out <- pcox(Y_T[, 1], Y_T[, 2], X_order, D, penalty="distance",lambda=0, k=nclusters-1, 
-                                    #beta0 = rnorm(ncol(X_order), 0,1),
-                                     #beta0 = c(fit$beta[1], sort(beta0)),
-                                    maxiters=1e3, tol=1e-5)
+                                    rho=1, maxiters=1e3, tol=1e-5)
   t1 <- Sys.time()
   t1-t0
 
@@ -379,14 +377,14 @@ nuSeq2 <- rep(NA, nC)
 Beta_matrix2 <- matrix(NA, ncol(X_T), nC)
 
 for (j in 1:nC) {
-  cat(paste('Current stage:', j, 'case'))
+  cat(paste('Current stage:', j, 'case'), '\n')
   # fix the number of clusters
   nclusters <- ncSeq[j]
   
 
   t0 <- Sys.time()
   out_trSCP <- pcox(Y_T[, 1], Y_T[, 2], X2_order, D_weighted, penalty="distance",lambda=0, k=nclusters-1, 
-                                    maxiters=1e3, tol=1e-5)
+                                    rho=1, maxiters=1e3, tol=1e-5)
   t2 <- Sys.time()
   t2-t0
 
