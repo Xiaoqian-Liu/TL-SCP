@@ -11,7 +11,7 @@
 #' @param maxiters The maximum number of iterations.
 #' @param tol The tolerance value for early stopping the algorithm. 
 #' @export
-pcox <- function(y, status, X, D, penalty="Lasso", lambda=0, k=2, beta0=rep(0, ncol(X)), maxiters=1e3, tol=1e-4){
+pcox <- function(y, status, X, D, penalty="Lasso", lambda=0, k=2, rho=1e-3, beta0=rep(0, ncol(X)), maxiters=1e3, tol=1e-4){
   
   n <- length(y)
   # get the initial value of eta
@@ -38,7 +38,7 @@ pcox <- function(y, status, X, D, penalty="Lasso", lambda=0, k=2, beta0=rep(0, n
     }
     
     if(penalty == 'distance'){
-      beta <- fused_Dist(y=z, X=X, w=w/n, D=D, k=k, beta0=beta0, maxiters=maxiters, tol=tol)$beta
+      beta <- fused_Dist(y=z, X=X, w=w/n, D=D, k=k, rho=rho, beta0=beta0, maxiters=maxiters, tol=tol)$beta
     }
    
     
