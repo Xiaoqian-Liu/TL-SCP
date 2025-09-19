@@ -7,6 +7,7 @@ output: pdf_document
 
 ```{r setup, include=FALSE}
 knitr::opts_chunk$set(echo = TRUE)
+# load the required libraries
 library(dplyr)
 library("readxl")
 library(glmnet)
@@ -14,20 +15,23 @@ library(ggplot2)
 library(survival)
 library(survminer)
 library(factoextra)
+library(ggalluvial)
 
-source('~/Code/cluster_label.R')
-source('~/Code/fused_Dist.R')
-source('~/Code/fused_Lasso.R')
-source('~/Code/fused_MCP.R')
-source('~/Code/fused_SCAD.R')
-source('~/Code/myGetDkn.R')
-source('~/Code/pcox_path.R')
-source('~/Code/pcox.R')
-source('~/Code/pll_cox.R')
-source('~/Code/wz.R')
-source('~/Code/wRankAveg.R')
-source('~/Code/trans_SCP.R')
-source('~/Code/SCP.R')
+## Make sure your working directory points to the TL-SCP folder
+# setwd("path/to/TL-SCP")
+source('Code/cluster_label.R')
+source('Code/fused_Dist.R')
+source('Code/fused_Lasso.R')
+source('Code/fused_MCP.R')
+source('Code/fused_SCAD.R')
+source('Code/myGetDkn.R')
+source('Code/pcox_path.R')
+source('Code/pcox.R')
+source('Code/pll_cox.R')
+source('Code/wz.R')
+source('Code/wRankAveg.R')
+source('Code/trans_SCP.R')
+source('Code/SCP.R')
 
 ```
 
@@ -619,6 +623,7 @@ Combined_ordered <- Combined_ordered[-24, c(1,4,5,6, 7)]
 Alluvial plot for SCP v.s. TL-SCP
 
 ```{r}
+
 Combined_ordered2 <- Combined_ordered[, c(1,2,3, 5)]
 colnames(Combined_ordered2) <- c("Mutation", "SCP", "TL_SCP", "count")
 # Count the number of mutations
