@@ -46,7 +46,9 @@ se <- c(c(Err_cox), c(Err_SCP),  c(Err_tSCP))
 
 nmi <- c(c(NMI_M_cox), c(NMI_M_SCP), c(NMI_M_tSCP))
 
-dt <- data.frame(Method, s, se, nmi)
+nclusters <- c(c(k_cox), c(k_SCP), c(k_tSCP))
+
+dt <- data.frame(Method, s, se, nmi, nclusters)
 dt$s <- as.factor(dt$s)
 
 
@@ -96,4 +98,5 @@ p2 <- ggplot(dt, aes(x=s, y=nmi, color=Method)) +
 
 
 ggarrange(p1, p2, nrow=1, ncol = 2, common.legend = TRUE, legend = "top")
+
 
