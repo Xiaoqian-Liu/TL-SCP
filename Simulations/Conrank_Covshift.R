@@ -18,7 +18,6 @@ library(Matrix)
 library(survival)
 library(gurobi)
 library(gtools)
-#library(SIS)
 library(dplyr)
 library(ggplot2)
 library(latex2exp)
@@ -27,7 +26,7 @@ library(factoextra)
 
 #set dimensions
 n_T <- 200
-n_S <- 2000
+n_S <- 1000
 n <- n_T+n_S
 p <- 90
 sdSeq <- c(0.05, 0.1, 0.25, 0.35, 0.5)
