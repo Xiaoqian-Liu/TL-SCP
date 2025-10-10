@@ -30,6 +30,5 @@ Please reach out to xiaoqian.liu@ucr.edu for any questions.
 
 ## Citation
 
-Xiaoqian Liu, Hao Yan, Haoming Shi, Emilie Montellier, Eric C. Chi, Pierre Hainaut, Wenyi Wang (2025). Transfer Learning for Survival-based Clustering of Predictors with an Application to TP53 Mutation Annotation. 
-bioRxiv 2025.10.06.680732; doi: https://doi.org/10.1101/2025.10.06.680732
+Liu, X., Yan, H., Shi, H., Montellier, E., Chi, E. C., Hainaut, P., & Wang, W. (2025). Transfer Learning for Survival-based Clustering of Predictors with an Application to TP53 Mutation Annotation. bioRxiv, 2025-10.
 
