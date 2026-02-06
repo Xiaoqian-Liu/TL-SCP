@@ -58,6 +58,7 @@ pcox_path <- function(y, status, X, D, penalty="Lasso", lambdaSeq=seq(1, 1e-3, l
     Y <- cbind(time=y, status=status)
     fit_cox <- glmnet(X, Y, family = "cox", alpha = 0, lambda = 1e-4)
     beta0 <- runmed(fit_cox$beta, k=5) #median filter
+    beta0 <- as.numeric(as.matrix(fit_cox$beta))
     #beta0 <- fit_cox$beta
     
     for(i in 1:nk){
